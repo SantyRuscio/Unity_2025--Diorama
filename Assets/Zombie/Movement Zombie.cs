@@ -59,7 +59,7 @@ public class MovementZombie : MonoBehaviour
                 if (moveAudio != null)
                     moveAudio.Stop();
 
-                EventManager.Trigger(TypeEcvents.CameraSlider);
+               EventManager.Trigger(TypeEcvents.CameraSliderHorizontal);
 
                 soundManager.ReproducirSonido(suspiroAudio);
 

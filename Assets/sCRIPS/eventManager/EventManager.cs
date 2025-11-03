@@ -8,8 +8,11 @@ public enum TypeEcvents
 {
     GameOver,
     Win,
-    CameraSlider,
-    OpenFirstDoor
+    CameraSliderHorizontal,
+    CameraFirstPathing,
+    CameraSliderFirtsInsideHouse,
+    OpenFirstDoor,
+    CloseFirstDoor
 }
 
 //IMPORTANTE DESSUSCRIBIRSE AL DESTRUIR 

@@ -22,5 +22,3 @@ public class ZombieSaludo : MonoBehaviour
         myGameObj.SetActive(!myGameObj.activeSelf); // cambia entre on/off
     }
 }
-
-
