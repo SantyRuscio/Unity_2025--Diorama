@@ -3,11 +3,15 @@ using System.Collections;
 
 public class MovementZombie : MonoBehaviour
 {
+    [SerializeField] private SoundManager soundManager;
+
+
     [SerializeField] private Transform[] waypoints;      // Lista de puntos a seguir
     [SerializeField] private float speed = 5f;           // Velocidad del movimiento
     [SerializeField] private float reachDistance = 0.2f; // Distancia mínima para considerar que llegó
     [SerializeField] private AudioSource moveAudio;      // Sonido que se reproduce al moverse
-    [SerializeField] private float startDelay = 0.5f;      // Tiempo que espera antes de comenzar
+    [SerializeField] private AudioClip suspiroAudio;     // Clip del suspiro
+    [SerializeField] private float startDelay = 0.5f;    // Tiempo que espera antes de comenzar
 
     private int currentWaypointIndex = 0;
     private bool canMove = false;
@@ -30,10 +34,11 @@ public class MovementZombie : MonoBehaviour
         if (!canMove || waypoints.Length == 0) return;
 
         Transform target = waypoints[currentWaypointIndex];
-        float distance = Vector3.Distance(transform.position, target.position);
 
         // Mover hacia el waypoint actual
         transform.position = Vector3.MoveTowards(transform.position, target.position, speed * Time.deltaTime);
+
+        float distance = Vector3.Distance(transform.position, target.position);
 
         // Reproducir sonido mientras se mueve
         if (!isMoving && distance > reachDistance)
@@ -56,6 +61,7 @@ public class MovementZombie : MonoBehaviour
 
                 EventManager.Trigger(TypeEcvents.CameraSlider);
 
+                soundManager.ReproducirSonido(suspiroAudio);
 
                 Destroy(gameObject);
                 return;
