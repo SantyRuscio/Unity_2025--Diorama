@@ -49,8 +49,7 @@ public class CameraLookSides : MonoBehaviour
 
         isRotating = false;
 
-        // Opcional: disparar algún evento si quieres
-        // EventManager.Trigger(TypeEcvents.NextEvent);
+        EventManager.Trigger(TypeEcvents.CameraSecondPathing);
     }
     #endregion
 

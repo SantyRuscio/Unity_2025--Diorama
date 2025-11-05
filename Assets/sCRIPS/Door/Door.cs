@@ -18,12 +18,14 @@ public class DoorEventRotator : MonoBehaviour
         closedRotation = doorObject.rotation;
 
         EventManager.Subscribe(TypeEcvents.OpenFirstDoor, OpenDoor);
+
         EventManager.Subscribe(TypeEcvents.CloseFirstDoor, CloseDoor);
     }
 
     private void OnDestroy()
     {
         EventManager.Unsubscribe(TypeEcvents.OpenFirstDoor, OpenDoor);
+
         EventManager.Unsubscribe(TypeEcvents.CloseFirstDoor, CloseDoor);
     }
 

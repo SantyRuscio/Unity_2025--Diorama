@@ -12,7 +12,8 @@ public enum TypeEcvents
     CameraFirstPathing,
     CameraSliderFirtsInsideHouse,
     OpenFirstDoor,
-    CloseFirstDoor
+    CloseFirstDoor,
+    CameraSecondPathing,
 }
 
 //IMPORTANTE DESSUSCRIBIRSE AL DESTRUIR 
