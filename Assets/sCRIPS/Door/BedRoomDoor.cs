@@ -42,6 +42,10 @@ public class BedRoomDoor : MonoBehaviour
         }
 
         doorObject.rotation = targetRotation;
+
         isOpening = false;
+
+
+        EventManager.Trigger(TypeEcvents.CameraRoomPathing);
     }
 }

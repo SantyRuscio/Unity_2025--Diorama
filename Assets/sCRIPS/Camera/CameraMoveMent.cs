@@ -1,4 +1,4 @@
-using System.Collections;
+Ôªøusing System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 public class CameraMoveMent : MonoBehaviour
@@ -7,14 +7,17 @@ public class CameraMoveMent : MonoBehaviour
     [SerializeField] private Transform[] waypoints;
     [SerializeField] private Transform[] secondWaypointsPath;
     [SerializeField] private Transform[] ThirdtWaypointsPath;
+    [SerializeField] private Transform[] RoomWaypointsPath;
+
     [SerializeField] private float speed = 2f;
     [SerializeField] private float SecondPathSpeed = 1f;
     [SerializeField] private float reachDistance = 0.2f;
-    [SerializeField] private float rotationSpeed = 3f; // m·s bajo para rotaciÛn m·s suave
+    [SerializeField] private float rotationSpeed = 3f; // m√°s bajo para rotaci√≥n m√°s suave
 
     [Header("Audio")]
     [SerializeField] private AudioClip puertaAudio;
     [SerializeField] private AudioClip CortoLuces;
+    [SerializeField] private AudioClip walksSound;
     [SerializeField] private SoundManager soundManager;
 
     private int currentWaypointIndex = 0;
@@ -23,15 +26,20 @@ public class CameraMoveMent : MonoBehaviour
     private void Awake()
     {
         EventManager.Subscribe(TypeEcvents.CameraFirstPathing, StartCameraPath);
-
         EventManager.Subscribe(TypeEcvents.CameraSecondPathing, StartSecondCameraPath);
+        EventManager.Subscribe(TypeEcvents.CameraRoomPathing, StartRoomCameraPath);
     }
 
     private void OnDestroy()
     {
         EventManager.Unsubscribe(TypeEcvents.CameraFirstPathing, StartCameraPath);
-
         EventManager.Unsubscribe(TypeEcvents.CameraSecondPathing, StartSecondCameraPath);
+        EventManager.Unsubscribe(TypeEcvents.CameraRoomPathing, StartRoomCameraPath);
+    }
+
+    private void Start()
+    {
+        if (soundManager != null) return;
     }
 
     #region PRIMER RECORRIDO
@@ -47,6 +55,8 @@ public class CameraMoveMent : MonoBehaviour
 
     private IEnumerator MoveAlongWaypoints()
     {
+        soundManager.ReproducirSonido(walksSound, true);
+
         while (currentWaypointIndex < waypoints.Length)
         {
             Transform target = waypoints[currentWaypointIndex];
@@ -58,11 +68,10 @@ public class CameraMoveMent : MonoBehaviour
             yield return null;
         }
 
+        soundManager.DetenerSonido();
+
         finished = true;
-
-        if (soundManager != null && puertaAudio != null)
-            soundManager.ReproducirSonido(puertaAudio);
-
+        soundManager.ReproducirSonido(puertaAudio);
         EventManager.Trigger(TypeEcvents.CameraSliderFirtsInsideHouse);
     }
     #endregion
@@ -79,20 +88,20 @@ public class CameraMoveMent : MonoBehaviour
     }
 
     private IEnumerator MoveAlongSecondWaypoints()
-    {
+    { 
+        soundManager.ReproducirSonido(walksSound, true);
+
         while (currentWaypointIndex < secondWaypointsPath.Length)
         {
             Transform target = secondWaypointsPath[currentWaypointIndex];
 
-            // Movimiento hacia el waypoint
             transform.position = Vector3.MoveTowards(transform.position, target.position, SecondPathSpeed * Time.deltaTime);
 
-            // RotaciÛn m·s suave y cinematogr·fica
+            // Rotaci√≥n suave
             Vector3 direction = (target.position - transform.position).normalized;
             if (direction.sqrMagnitude > 0.001f)
             {
                 Quaternion lookRotation = Quaternion.LookRotation(direction);
-                // Lerp con factor ajustado para suavidad progresiva
                 transform.rotation = Quaternion.Lerp(
                     transform.rotation,
                     lookRotation,
@@ -100,20 +109,19 @@ public class CameraMoveMent : MonoBehaviour
                 );
             }
 
-            // Pasar al siguiente waypoint
             if (Vector3.Distance(transform.position, target.position) < reachDistance)
                 currentWaypointIndex++;
 
             yield return null;
         }
 
-        if (soundManager != null && CortoLuces != null)
-            soundManager.ReproducirSonido(CortoLuces);
+        soundManager.DetenerSonido();
+
+        soundManager.ReproducirSonido(CortoLuces);
 
         yield return new WaitForSeconds(2f);
 
         finished = true;
-
         StartThirdCameraPath();
     }
     #endregion
@@ -131,19 +139,18 @@ public class CameraMoveMent : MonoBehaviour
 
     private IEnumerator MoveAlongThirdWaypoints()
     {
+        soundManager.ReproducirSonido(walksSound, true);
+
         while (currentWaypointIndex < ThirdtWaypointsPath.Length)
         {
             Transform target = ThirdtWaypointsPath[currentWaypointIndex];
 
-            // Movimiento hacia el waypoint
             transform.position = Vector3.MoveTowards(transform.position, target.position, SecondPathSpeed * Time.deltaTime);
 
-            // RotaciÛn m·s suave y cinematogr·fica
             Vector3 direction = (target.position - transform.position).normalized;
             if (direction.sqrMagnitude > 0.001f)
             {
                 Quaternion lookRotation = Quaternion.LookRotation(direction);
-                // Lerp con factor ajustado para suavidad progresiva
                 transform.rotation = Quaternion.Lerp(
                     transform.rotation,
                     lookRotation,
@@ -151,20 +158,67 @@ public class CameraMoveMent : MonoBehaviour
                 );
             }
 
-            // Pasar al siguiente waypoint
             if (Vector3.Distance(transform.position, target.position) < reachDistance)
                 currentWaypointIndex++;
 
             yield return null;
         }
 
-        // Pausa final de 2 segundos
+        soundManager.DetenerSonido();
+
         yield return new WaitForSeconds(1f);
 
         finished = true;
 
-        if (soundManager != null && CortoLuces != null)
-            soundManager.ReproducirSonido(CortoLuces);
+        soundManager.ReproducirSonido(CortoLuces);
+    }
+    #endregion
+
+    #region HABITACI√ìN RECORRIDO
+    public void StartRoomCameraPath(object[] parameters)
+    {
+        if (RoomWaypointsPath.Length > 0)
+        {
+            finished = false;
+            currentWaypointIndex = 0;
+            StartCoroutine(MoveAlongRoomWaypoints());
+        }
+    }
+
+    private IEnumerator MoveAlongRoomWaypoints()
+    {
+        soundManager.ReproducirSonido(walksSound, true);
+
+        while (currentWaypointIndex < RoomWaypointsPath.Length)
+        {
+            Transform target = RoomWaypointsPath[currentWaypointIndex];
+
+            transform.position = Vector3.MoveTowards(transform.position, target.position, SecondPathSpeed * Time.deltaTime);
+
+            Vector3 direction = (target.position - transform.position).normalized;
+            if (direction.sqrMagnitude > 0.001f)
+            {
+                Quaternion lookRotation = Quaternion.LookRotation(direction);
+                transform.rotation = Quaternion.Lerp(
+                    transform.rotation,
+                    lookRotation,
+                    1f - Mathf.Exp(-rotationSpeed * Time.deltaTime)
+                );
+            }
+
+            if (Vector3.Distance(transform.position, target.position) < reachDistance)
+                currentWaypointIndex++;
+
+            yield return null;
+        }
+
+        soundManager.DetenerSonido();
+
+        yield return new WaitForSeconds(1f);
+
+        finished = true;
+
+        soundManager.ReproducirSonido(CortoLuces);
     }
     #endregion
 }
