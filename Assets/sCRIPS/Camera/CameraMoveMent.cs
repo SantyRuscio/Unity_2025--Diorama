@@ -8,16 +8,20 @@ public class CameraMoveMent : MonoBehaviour
     [SerializeField] private Transform[] secondWaypointsPath;
     [SerializeField] private Transform[] ThirdtWaypointsPath;
     [SerializeField] private Transform[] RoomWaypointsPath;
+    [SerializeField] private Transform[] LivingWaypointsPath;
 
     [SerializeField] private float speed = 2f;
     [SerializeField] private float SecondPathSpeed = 1f;
     [SerializeField] private float reachDistance = 0.2f;
     [SerializeField] private float rotationSpeed = 3f; // más bajo para rotación más suave
+    [SerializeField] private float LivingPathSpeed = 0.2f;
+    [SerializeField] private float LivingrotationSpeed = 1f;
 
     [Header("Audio")]
     [SerializeField] private AudioClip puertaAudio;
     [SerializeField] private AudioClip CortoLuces;
     [SerializeField] private AudioClip walksSound;
+    [SerializeField] private AudioClip respiracion;
     [SerializeField] private SoundManager soundManager;
 
     private int currentWaypointIndex = 0;
@@ -28,6 +32,7 @@ public class CameraMoveMent : MonoBehaviour
         EventManager.Subscribe(TypeEcvents.CameraFirstPathing, StartCameraPath);
         EventManager.Subscribe(TypeEcvents.CameraSecondPathing, StartSecondCameraPath);
         EventManager.Subscribe(TypeEcvents.CameraRoomPathing, StartRoomCameraPath);
+        EventManager.Subscribe(TypeEcvents.CameraLivingPathing, StartLivingCameraPath);
     }
 
     private void OnDestroy()
@@ -35,6 +40,7 @@ public class CameraMoveMent : MonoBehaviour
         EventManager.Unsubscribe(TypeEcvents.CameraFirstPathing, StartCameraPath);
         EventManager.Unsubscribe(TypeEcvents.CameraSecondPathing, StartSecondCameraPath);
         EventManager.Unsubscribe(TypeEcvents.CameraRoomPathing, StartRoomCameraPath);
+        EventManager.Subscribe(TypeEcvents.CameraLivingPathing, StartLivingCameraPath);
     }
 
     private void Start()
@@ -118,6 +124,8 @@ public class CameraMoveMent : MonoBehaviour
         soundManager.DetenerSonido();
 
         soundManager.ReproducirSonido(CortoLuces);
+
+        soundManager.ReproducirSonido(respiracion);
 
         yield return new WaitForSeconds(2f);
 
@@ -219,6 +227,60 @@ public class CameraMoveMent : MonoBehaviour
         finished = true;
 
         soundManager.ReproducirSonido(CortoLuces);
+
+        EventManager.Trigger(TypeEcvents.OpenLivingRoom);
     }
     #endregion
+
+    #region LIVING RECORRIDO
+    public void StartLivingCameraPath(object[] parameters)
+    {
+        if (LivingWaypointsPath.Length > 0)
+        {
+            finished = false;
+            currentWaypointIndex = 0;
+            StartCoroutine(MoveAlongLivingWaypoints());
+        }
+    }
+
+    private IEnumerator MoveAlongLivingWaypoints()
+    {
+        soundManager.ReproducirSonido(walksSound, true);
+
+        while (currentWaypointIndex < LivingWaypointsPath.Length)
+        {
+            Transform target = LivingWaypointsPath[currentWaypointIndex];
+
+            transform.position = Vector3.MoveTowards(transform.position, target.position, LivingPathSpeed * Time.deltaTime);
+
+            Vector3 direction = (target.position - transform.position).normalized;
+            if (direction.sqrMagnitude > 0.001f)
+            {
+                Quaternion lookRotation = Quaternion.LookRotation(direction);
+                transform.rotation = Quaternion.Lerp(
+                    transform.rotation,
+                    lookRotation,
+                    1f - Mathf.Exp(-LivingrotationSpeed * Time.deltaTime) 
+                );
+            }
+
+            if (Vector3.Distance(transform.position, target.position) < reachDistance)
+                currentWaypointIndex++;
+
+            yield return null;
+        }
+
+        soundManager.DetenerSonido();
+
+        yield return new WaitForSeconds(1f);
+
+        finished = true;
+
+        soundManager.ReproducirSonido(CortoLuces);
+
+      //  EventManager.Trigger(TypeEcvents.OpenLivingRoom);
+    }
+
+    #endregion
+
 }
