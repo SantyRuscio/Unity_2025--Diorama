@@ -9,8 +9,11 @@ public class CameraMoveMent : MonoBehaviour
     [SerializeField] private Transform[] ThirdtWaypointsPath;
     [SerializeField] private Transform[] RoomWaypointsPath;
     [SerializeField] private Transform[] LivingWaypointsPath;
+    [SerializeField] private Transform[] ParkWaypointsPath;
+
 
     [SerializeField] private float speed = 2f;
+    [SerializeField] private float Parkspeed = 50f;
     [SerializeField] private float SecondPathSpeed = 1f;
     [SerializeField] private float reachDistance = 0.2f;
     [SerializeField] private float rotationSpeed = 3f; // más bajo para rotación más suave
@@ -33,6 +36,8 @@ public class CameraMoveMent : MonoBehaviour
         EventManager.Subscribe(TypeEcvents.CameraSecondPathing, StartSecondCameraPath);
         EventManager.Subscribe(TypeEcvents.CameraRoomPathing, StartRoomCameraPath);
         EventManager.Subscribe(TypeEcvents.CameraLivingPathing, StartLivingCameraPath);
+        EventManager.Subscribe(TypeEcvents.TeleportPark, StartTelePortPark);
+
     }
 
     private void OnDestroy()
@@ -40,7 +45,8 @@ public class CameraMoveMent : MonoBehaviour
         EventManager.Unsubscribe(TypeEcvents.CameraFirstPathing, StartCameraPath);
         EventManager.Unsubscribe(TypeEcvents.CameraSecondPathing, StartSecondCameraPath);
         EventManager.Unsubscribe(TypeEcvents.CameraRoomPathing, StartRoomCameraPath);
-        EventManager.Subscribe(TypeEcvents.CameraLivingPathing, StartLivingCameraPath);
+        EventManager.Unsubscribe(TypeEcvents.CameraLivingPathing, StartLivingCameraPath);
+        EventManager.Unsubscribe(TypeEcvents.TeleportPark, StartTelePortPark);
     }
 
     private void Start()
@@ -278,7 +284,58 @@ public class CameraMoveMent : MonoBehaviour
 
         soundManager.ReproducirSonido(CortoLuces);
 
-      //  EventManager.Trigger(TypeEcvents.OpenLivingRoom);
+        EventManager.Trigger(TypeEcvents.CameraLookLiving);
+    }
+
+    #endregion
+
+    #region TP al PARK
+    public void StartTelePortPark(object[] parameters)
+    {
+        if (ParkWaypointsPath.Length > 0)
+        {
+            finished = false;
+            currentWaypointIndex = 0;
+            StartCoroutine(MoveAlongParkWaypoints());
+        }
+    }
+
+    private IEnumerator MoveAlongParkWaypoints()
+    {
+        soundManager.ReproducirSonido(walksSound, true);
+
+        while (currentWaypointIndex < ParkWaypointsPath.Length)
+        {
+            Transform target = ParkWaypointsPath[currentWaypointIndex];
+
+            // Movimiento hacia el waypoint
+            transform.position = Vector3.MoveTowards(transform.position, target.position, Parkspeed * Time.deltaTime);
+
+            // Rotación suave hacia el waypoint
+            Vector3 direction = (target.position - transform.position).normalized;
+            if (direction.sqrMagnitude > 0.001f)
+            {
+                Quaternion lookRotation = Quaternion.LookRotation(direction);
+                transform.rotation = Quaternion.Lerp(
+                    transform.rotation,
+                    lookRotation,
+                    1f - Mathf.Exp(-rotationSpeed * Time.deltaTime)
+                );
+            }
+
+            // Cuando llega al waypoint, pasa al siguiente
+            if (Vector3.Distance(transform.position, target.position) < reachDistance)
+                currentWaypointIndex++;
+
+            yield return null;
+        }
+
+        // Cuando termina el recorrido
+        soundManager.DetenerSonido();
+
+        yield return new WaitForSeconds(1f);
+
+        finished = true;
     }
 
     #endregion

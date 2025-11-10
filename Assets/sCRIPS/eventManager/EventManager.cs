@@ -16,7 +16,9 @@ public enum TypeEcvents
     CameraSecondPathing,
     CameraRoomPathing,
     OpenLivingRoom,
-    CameraLivingPathing
+    CameraLivingPathing,
+    CameraLookLiving,
+    TeleportPark
 }
 
 //IMPORTANTE DESSUSCRIBIRSE AL DESTRUIR 
