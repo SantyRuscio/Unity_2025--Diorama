@@ -18,7 +18,8 @@ public enum TypeEcvents
     OpenLivingRoom,
     CameraLivingPathing,
     CameraLookLiving,
-    TeleportPark
+    TeleportPark,
+    ActivateZombieParkMovemetn,
 }
 
 //IMPORTANTE DESSUSCRIBIRSE AL DESTRUIR 
