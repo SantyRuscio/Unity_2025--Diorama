@@ -284,6 +284,8 @@ public class CameraMoveMent : MonoBehaviour
 
         soundManager.ReproducirSonido(CortoLuces);
 
+        soundManager.ReproducirSonido(respiracion);
+
         EventManager.Trigger(TypeEcvents.CameraLookLiving);
     }
 
